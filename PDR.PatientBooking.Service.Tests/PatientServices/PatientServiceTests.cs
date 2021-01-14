@@ -102,14 +102,16 @@ namespace PDR.PatientBooking.Service.Tests.PatientServices
                 DateOfBirth = request.DateOfBirth,
                 Orders = new List<Order>(),
                 ClinicId = request.ClinicId,
-                Created = DateTime.UtcNow
             };
 
             //act
             _patientService.AddPatient(request);
 
+            expected.Created = _context.Patient.FirstOrDefault().Created;
+
             //assert
-            _context.Patient.Should().ContainEquivalentOf(expected, options => options.Excluding(patient => patient.Id).Excluding(patient => patient.Created));
+            _context.Patient.Should().ContainEquivalentOf(expected, options => options.Excluding(patient => patient.Id).);
+            // .Excluding(patient => patient.Created)
         }
 
         [Test]
