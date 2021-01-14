@@ -47,6 +47,10 @@ namespace PDR.PatientBookingApi.Controllers
                 _bookingService.AddBooking(request);
                 return Ok();
             }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, ex);

@@ -13,18 +13,21 @@ namespace PDR.PatientBooking.Service.BookingServices
     public class BookingService : IBookingService
     {
         private readonly PatientBookingContext _context;
+        private readonly IGetPatientNextAppointmentRequestValidation _getPatientNextAppointmentRequestValidator;
+        private readonly IAddBookingRequestValidation _addBookingRequestValidation;
 
-        private readonly IGetPatientNextAppointmentRequestValidation _validator;
-
-        public BookingService(PatientBookingContext context, IGetPatientNextAppointmentRequestValidation validator)
+        public BookingService(PatientBookingContext context,
+            IGetPatientNextAppointmentRequestValidation getPatientNextAppointmenRequesttValidator,
+            IAddBookingRequestValidation addBookingRequestValidation)
         {
             _context = context;
-            _validator = validator;
+            _getPatientNextAppointmentRequestValidator = getPatientNextAppointmenRequesttValidator;
+            _addBookingRequestValidation = addBookingRequestValidation;
         }
 
         public GetPatientNextAppointmentResponse GetPatientNextAppointment(GetPatientNextAppointmentRequest request)
         {
-            var validationResult = _validator.ValidateRequest(request);
+            var validationResult = _getPatientNextAppointmentRequestValidator.ValidateRequest(request);
 
             if (!validationResult.PassedValidation)
             {
@@ -32,7 +35,7 @@ namespace PDR.PatientBooking.Service.BookingServices
             }
 
             var bookings = _context.Order
-                .Where(x => x.Patient.Id == request.PatientId && x.StartTime > DateTime.Now)
+                .Where(x => x.PatientId == request.PatientId && x.StartTime > DateTime.UtcNow)
                 .OrderBy(x => x.StartTime)
                 .ToList();
 
@@ -47,6 +50,13 @@ namespace PDR.PatientBooking.Service.BookingServices
 
         public void AddBooking(AddBookingRequest request)
         {
+            var validationResult = _addBookingRequestValidation.ValidateRequest(request);
+
+            if (!validationResult.PassedValidation)
+            {
+                throw new ArgumentException(validationResult.Errors.First());
+            }
+
             var bookingPatient = _context.Patient.FirstOrDefault(x => x.Id == request.PatientId);
 
             var bookingDoctor = _context.Doctor.FirstOrDefault(x => x.Id == request.DoctorId);

@@ -31,14 +31,14 @@ namespace PDR.PatientBooking.Service.BookingServices.Validation
             var errors = new List<string>();
 
             var bookings = _context.Order
-                .Where(x => x.Patient.Id == request.PatientId)
+                .Where(x => x.PatientId == request.PatientId)
                 .OrderBy(x => x.StartTime)
                 .ToList();
 
             if (bookings.Count() == 0)
-                errors.Add($"Bookings with Patient ID {request.PatientId} were not found");
+                errors.Add($"Active Bookings with Patient ID {request.PatientId} were not found");
 
-            if (bookings.Where(x => x.StartTime > DateTime.Now).Count() == 0)
+            if (bookings.Where(x => x.StartTime > DateTime.UtcNow).Count() == 0)
                 errors.Add("Bookings can be created only for the future dates.");
 
             if (errors.Any())
