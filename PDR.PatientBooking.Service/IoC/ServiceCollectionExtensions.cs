@@ -26,6 +26,7 @@ namespace PDR.PatientBooking.Service.IoC
             collection.AddScoped<IBookingService, BookingService>();
             collection.AddScoped<IGetPatientNextAppointmentRequestValidation, GetPatientNextAppointmentRequestValidation>();
             collection.AddScoped<IAddBookingRequestValidation, AddBookingRequestValidation>();
+            collection.AddScoped<ICancelBookingRequestValidation, CancelBookingRequestValidation>();
         }
     }
 }

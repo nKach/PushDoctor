@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PDR.PatientBooking.Data.Models;
 using PDR.PatientBooking.Service.BookingServices;
 using PDR.PatientBooking.Service.BookingServices.Requests;
 using System;
-using System.Collections.Generic;
 using System.Data.Entity.Core;
 
 namespace PDR.PatientBookingApi.Controllers
@@ -57,27 +55,26 @@ namespace PDR.PatientBookingApi.Controllers
             }
         }
 
-        private static MyOrderResult UpdateLatestBooking(List<Order> bookings2, int i)
+        [HttpPut()]
+        public IActionResult CancelBooking(CancelBookingRequest request)
         {
-            return new MyOrderResult
+            try
             {
-                Id = bookings2[i].Id,
-                DoctorId = bookings2[i].DoctorId,
-                StartTime = bookings2[i].StartTime,
-                EndTime = bookings2[i].EndTime,
-                PatientId = bookings2[i].PatientId,
-                SurgeryType = (int)bookings2[i].GetSurgeryType()
-            };
-        }
-
-        private class MyOrderResult
-        {
-            public Guid Id { get; set; }
-            public DateTime StartTime { get; set; }
-            public DateTime EndTime { get; set; }
-            public long PatientId { get; set; }
-            public long DoctorId { get; set; }
-            public int SurgeryType { get; set; }
+                _bookingService.CancelBooking(request);
+                return Ok();
+            }
+            catch (ObjectNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }
         }
     }
 }

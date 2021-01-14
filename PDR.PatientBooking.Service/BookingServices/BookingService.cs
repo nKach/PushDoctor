@@ -15,14 +15,17 @@ namespace PDR.PatientBooking.Service.BookingServices
         private readonly PatientBookingContext _context;
         private readonly IGetPatientNextAppointmentRequestValidation _getPatientNextAppointmentRequestValidator;
         private readonly IAddBookingRequestValidation _addBookingRequestValidation;
+        private readonly ICancelBookingRequestValidation _cancelBookingRequestValidation;
 
         public BookingService(PatientBookingContext context,
             IGetPatientNextAppointmentRequestValidation getPatientNextAppointmenRequesttValidator,
-            IAddBookingRequestValidation addBookingRequestValidation)
+            IAddBookingRequestValidation addBookingRequestValidation,
+            ICancelBookingRequestValidation cancelBookingRequestValidation)
         {
             _context = context;
             _getPatientNextAppointmentRequestValidator = getPatientNextAppointmenRequesttValidator;
             _addBookingRequestValidation = addBookingRequestValidation;
+            _cancelBookingRequestValidation = cancelBookingRequestValidation;
         }
 
         public GetPatientNextAppointmentResponse GetPatientNextAppointment(GetPatientNextAppointmentRequest request)
@@ -35,9 +38,14 @@ namespace PDR.PatientBooking.Service.BookingServices
             }
 
             var bookings = _context.Order
-                .Where(x => x.PatientId == request.PatientId && x.StartTime > DateTime.UtcNow)
+                .Where(x => x.PatientId == request.PatientId && x.StartTime > DateTime.UtcNow && !x.Cancelled)
                 .OrderBy(x => x.StartTime)
                 .ToList();
+
+            if (!bookings.Any())
+            {
+                return new GetPatientNextAppointmentResponse();
+            }
 
             return new GetPatientNextAppointmentResponse
             {
@@ -74,15 +82,38 @@ namespace PDR.PatientBooking.Service.BookingServices
 
             if (bookingPatient?.Clinic != null)
             {
-                if (Enum.IsDefined(typeof(SurgeryType), bookingPatient.Clinic?.SurgeryType))
-                {
-                    booking.SurgeryType = (int)bookingPatient.Clinic.SurgeryType;
-                }
+                booking.SurgeryType = (int)bookingPatient.Clinic.SurgeryType;
             }
 
             _context.Order.AddRange(new List<Order> { booking });
 
             _context.SaveChanges();
+        }
+
+        public void CancelBooking(CancelBookingRequest request)
+        {
+            var validationResult = _cancelBookingRequestValidation.ValidateRequest(request);
+
+            if (!validationResult.PassedValidation)
+            {
+                if (validationResult.Errors.Contains($"Booking with id {request.BookingId} does not exist."))
+                {
+                    throw new ObjectNotFoundException($"Booking with id {request.BookingId} does not exist.");
+                }
+
+                throw new ArgumentException(validationResult.Errors.First());
+            }
+
+            var booking = _context.Order.FirstOrDefault(x => x.Id == request.BookingId && !x.Cancelled);
+
+            if (booking != null)
+            {
+                booking.Cancelled = true;
+
+                _context.Order.Update(booking);
+
+                _context.SaveChanges();
+            }
         }
     }
 }
