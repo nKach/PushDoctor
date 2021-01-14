@@ -37,7 +37,7 @@ namespace PDR.PatientBooking.Service.BookingServices.Validation
             var errors = new List<string>();
 
             if (request.StartTime >= request.EndTime)
-                errors.Add("Booking End time can't be less or equal than booking Start time.");
+                errors.Add("Booking End time can't be less than or equal to booking Start time.");
 
             if (errors.Any())
             {
@@ -70,18 +70,14 @@ namespace PDR.PatientBooking.Service.BookingServices.Validation
         {
             var errors = new List<string>();
 
-            var bookings = _context.Order
-                .Where(x => x.DoctorId == request.DoctorId && x.StartTime > DateTime.UtcNow)
-                .ToList();
+            var isBookingExisting = _context.Order
+                .Where(x => x.DoctorId == request.DoctorId && x.StartTime > DateTime.UtcNow && !x.Cancelled
+                && request.StartTime >= x.StartTime && request.EndTime <= x.EndTime
+                || (request.EndTime >= x.StartTime && request.EndTime <= x.EndTime))
+                .Any();
 
-            foreach (var booking in bookings)
-            {
-                if ((request.StartTime >= booking.StartTime && request.EndTime <= booking.EndTime) ||
-                    (request.EndTime >= booking.StartTime && request.EndTime <= booking.EndTime))
-                {
-                    errors.Add($"Doctor {booking.Doctor.FirstName} {booking.Doctor.LastName} can't have two booking at the same time.");
-                }
-            }
+            if (isBookingExisting)
+                errors.Add($"Doctor can't have two bookings at the same time.");
 
             if (errors.Any())
             {

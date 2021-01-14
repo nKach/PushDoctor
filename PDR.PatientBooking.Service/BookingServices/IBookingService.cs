@@ -7,5 +7,6 @@ namespace PDR.PatientBooking.Service.BookingServices
     {
         GetPatientNextAppointmentResponse GetPatientNextAppointment(GetPatientNextAppointmentRequest request);
         void AddBooking(AddBookingRequest request);
+        void CancelBooking(CancelBookingRequest request);
     }
 }
