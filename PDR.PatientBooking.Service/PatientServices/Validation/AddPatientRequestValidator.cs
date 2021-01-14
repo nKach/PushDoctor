@@ -3,6 +3,7 @@ using PDR.PatientBooking.Service.PatientServices.Requests;
 using PDR.PatientBooking.Service.Validation;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace PDR.PatientBooking.Service.PatientServices.Validation
 {
@@ -26,6 +27,9 @@ namespace PDR.PatientBooking.Service.PatientServices.Validation
                 return result;
 
             if (ClinicNotFound(request, ref result))
+                return result;
+
+            if (InvaliEmailAddress(request, ref result))
                 return result;
 
             return result;
@@ -76,6 +80,39 @@ namespace PDR.PatientBooking.Service.PatientServices.Validation
             }
 
             return false;
+        }
+
+        public bool InvaliEmailAddress(AddPatientRequest request, ref PdrValidationResult result)
+        {
+            var errors = new List<string>();
+
+            var regex = CreateValidEmailRegex();
+
+            if (!ValidateEmailAddress(request.Email, regex))
+                errors.Add("Email must be a valid email address");
+
+            if (errors.Any())
+            {
+                result.PassedValidation = false;
+                result.Errors.AddRange(errors);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ValidateEmailAddress(string email, Regex regex)
+        {
+            bool isValid = regex.IsMatch(email);
+
+            return isValid;
+        }
+
+        private Regex CreateValidEmailRegex()
+        {
+            string validEmailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+
+            return new Regex(validEmailPattern, RegexOptions.IgnoreCase);
         }
     }
 }
