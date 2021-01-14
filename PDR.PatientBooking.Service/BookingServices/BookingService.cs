@@ -37,22 +37,22 @@ namespace PDR.PatientBooking.Service.BookingServices
                 throw new ObjectNotFoundException(validationResult.Errors.First());
             }
 
-            var bookings = _context.Order
+            var booking = _context.Order
                 .Where(x => x.PatientId == request.PatientId && x.StartTime > DateTime.UtcNow && !x.Cancelled)
                 .OrderBy(x => x.StartTime)
-                .ToList();
+                .FirstOrDefault();
 
-            if (!bookings.Any())
+            if (booking == null)
             {
                 return new GetPatientNextAppointmentResponse();
             }
 
             return new GetPatientNextAppointmentResponse
             {
-                Id = bookings.First().Id,
-                DoctorId = bookings.First().DoctorId,
-                StartTime = bookings.First().StartTime,
-                EndTime = bookings.First().EndTime
+                Id = booking.Id,
+                DoctorId = booking.DoctorId,
+                StartTime = booking.StartTime,
+                EndTime = booking.EndTime
             };
         }
 

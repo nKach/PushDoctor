@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace PDR.PatientBooking.Service.BookingServices.Validation
 {
-    class CancelBookingRequestValidation : ICancelBookingRequestValidation
+    public class CancelBookingRequestValidation : ICancelBookingRequestValidation
     {
         private readonly PatientBookingContext _context;
 
@@ -41,7 +41,7 @@ namespace PDR.PatientBooking.Service.BookingServices.Validation
             {
                 if (booking.PatientId != request.PatientId)
                 {
-                    errors.Add($"The Booking with id: {request.BookingId} is not attached to Patient " +
+                    errors.Add($"Booking with id: {request.BookingId} is not attached to Patient " +
                         $"with id {request.PatientId}.");
                 }
 
